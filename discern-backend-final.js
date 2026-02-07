@@ -25,7 +25,7 @@ const sessions = new Map();
 
 // Serve the HTML file at root
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/discern-final.html');
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Original Moments - Structure only (AI generates the actual questions)
