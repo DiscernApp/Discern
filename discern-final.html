@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discern</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #F5F5F3; color: #4A4A4A; line-height: 1.6; }
+    
+    .page-header { background: #2C3E50; padding: 32px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .page-header-content { max-width: 640px; margin: 0 auto; text-align: center; }
+    .page-logo { font-size: 48px; font-weight: 600; color: #FFFFFF; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .page-tagline { font-size: 16px; font-weight: 400; color: rgba(255, 255, 255, 0.8); }
+    
+    .home-screen { min-height: 100vh; background: #FFFFFF; }
+    .home-container { max-width: 640px; margin: 0 auto; padding: 40px 24px; }
+    
+    .moments-section { margin-bottom: 24px; }
+    .moment-card { background: #FFFFFF; border: 2px solid #E8E8E8; border-radius: 12px; padding: 24px; margin-bottom: 14px; cursor: pointer; transition: all 0.2s ease; }
+    .moment-card:hover { border-color: #3498DB; box-shadow: 0 4px 16px rgba(52, 152, 219, 0.12); transform: translateY(-2px); }
+    .moment-card.selected { border-color: #3498DB; background: rgba(52, 152, 219, 0.05); }
+    .moment-title { font-size: 17px; font-weight: 500; color: #2C3E50; }
+    .moment-prompt { font-size: 14px; color: #888; margin-top: 8px; display: none; }
+    .moment-card.selected .moment-prompt { display: block; }
+    
+    .situation-section { display: none; margin-top: 24px; }
+    .situation-section.visible { display: block; }
+    .situation-label { font-size: 15px; color: #4A4A4A; margin-bottom: 8px; display: block; }
+    .situation-textarea { width: 100%; min-height: 100px; padding: 14px 16px; border: 1px solid #E8E8E8; border-radius: 10px; font-family: inherit; font-size: 17px; resize: vertical; line-height: 1.5; }
+    .situation-textarea:focus { outline: none; border-color: #3498DB; }
+    .situation-textarea::placeholder { color: #999; }
+    
+    .continue-button { width: 100%; background: #FFFFFF; color: #2C3E50; border: 2px solid #E8E8E8; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
+    .continue-button:hover { border-color: #3498DB; background: rgba(52, 152, 219, 0.05); }
+    .continue-button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .validation-message { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; }
+    .error-message { background: #fee; border: 1px solid #fcc; color: #c00; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; }
+
+    .thinking-header { background: #2C3E50; padding: 24px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .thinking-header-content { max-width: 640px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .thinking-header-title { color: #FFFFFF; font-size: 17px; font-weight: 500; }
+    .thinking-header-subtitle { color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-top: 3px; }
+    .home-button { background: transparent; border: none; color: #FFFFFF; cursor: pointer; padding: 8px; font-size: 24px; line-height: 1; }
+    
+    .messages-container { max-width: 640px; margin: 0 auto; padding: 40px 24px 200px; background: #FFFFFF; }
+    .message { margin-bottom: 24px; display: flex; }
+    .message.assistant { justify-content: flex-start; }
+    .message.user { justify-content: flex-end; }
+    .message-content { max-width: 88%; padding: 20px 24px; border-radius: 16px; line-height: 1.65; font-size: 16px; }
+    .message.assistant .message-content { background: #F5F5F3; border: 2px solid #E8E8E8; color: #4A4A4A; }
+    .message.user .message-content { background: #2C3E50; color: #FFFFFF; }
+    
+    .input-container { position: fixed; bottom: 0; left: 0; right: 0; background: #FFFFFF; border-top: 2px solid #E8E8E8; padding: 20px 24px; z-index: 100; }
+    .input-wrapper { max-width: 640px; margin: 0 auto; display: flex; gap: 12px; align-items: flex-end; }
+    .input-textarea-main { flex: 1; min-height: 80px; max-height: 200px; padding: 16px; border: 2px solid #E8E8E8; border-radius: 10px; font-family: inherit; font-size: 16px; resize: vertical; }
+    .input-textarea-main:focus { outline: none; border-color: #3498DB; }
+    .input-textarea-main:disabled { background: #F5F5F3; cursor: not-allowed; }
+    .send-button { background: #3498DB; color: #FFFFFF; border: none; width: 52px; height: 52px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .send-button:disabled { background: #CCCCCC; cursor: not-allowed; }
+    
+    .complete-screen { min-height: 100vh; background: #FFFFFF; }
+    .complete-container { max-width: 640px; margin: 0 auto; padding: 40px 24px; }
+    .complete-card { background: #FFFFFF; border: 2px solid #E8E8E8; border-radius: 16px; padding: 32px; }
+    .complete-title { font-size: 20px; font-weight: 600; color: #2C3E50; margin-bottom: 20px; }
+    .reflection-item { background: #F5F5F3; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #3498DB; }
+    .reflection-text { font-size: 14px; color: #2C3E50; line-height: 1.6; }
+    .helpful-question { font-size: 16px; font-weight: 500; color: #2C3E50; margin: 24px 0 12px; text-align: center; }
+    .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    .rating-button { flex: 1; padding: 12px; border: 2px solid #E8E8E8; background: #FFFFFF; border-radius: 10px; font-size: 15px; cursor: pointer; }
+    .rating-button.helpful { border-color: #3498DB; background: #3498DB; color: #FFFFFF; }
+    .primary-button { background: #2C3E50; color: #FFFFFF; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; }
+    
+    .loading-indicator { text-align: center; padding: 40px 20px; color: #3498DB; }
+    .loading-text { font-size: 16px; margin-bottom: 8px; }
+    .loading-subtext { font-size: 14px; color: #888; }
+    
+    @media (max-width: 768px) {
+      .page-logo { font-size: 40px; }
+      .home-container, .messages-container, .complete-container { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const API_URL = 'http://localhost:3000';
+    
+    let state = {
+      screen: 'home',
+      moments: [],
+      selectedMoment: null,
+      situation: '',
+      framing: null,
+      messages: [],
+      questions: [],
+      questionIndex: 0,
+      responses: [],
+      currentInput: '',
+      isLoading: false,
+      error: null,
+      validation: null,
+      sessionId: null,
+      sessionStartTime: null,
+      aiGenerationTime: null,
+      aiCost: null,
+      showingRating: false,
+      helpfulRating: null
+    };
+
+    // Load moments on init
+    async function loadMoments() {
+      try {
+        const response = await fetch(`${API_URL}/api/moments`);
+        const data = await response.json();
+        state.moments = data.moments;
+        render();
+      } catch (err) {
+        console.error('Failed to load moments:', err);
+        // Fallback moments
+        state.moments = [
+          {id: 1, title: "Having a difficult conversation", situation_prompt: "What's the difficult conversation you need to have?"},
+          {id: 2, title: "When everything feels urgent", situation_prompt: "What's making everything feel urgent right now?"},
+          {id: 3, title: "I need to say no to someone", situation_prompt: "Who do you need to say no to?"},
+          {id: 4, title: "Someone's upset with me", situation_prompt: "Who's upset with you and what happened?"},
+          {id: 5, title: "I made a mistake", situation_prompt: "What mistake did you make?"}
+        ];
+        render();
+      }
+    }
+
+    function trackAnalytics(event, data) {
+      const payload = {
+        event,
+        data: {
+          ...data,
+          timestamp: new Date().toISOString(),
+          sessionId: state.sessionId
+        }
+      };
+      fetch(`${API_URL}/api/analytics`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+      console.log('📊', event, data);
+    }
+
+    function selectMoment(momentId) {
+      const moment = state.moments.find(m => m.id === momentId);
+      if (!moment) return;
+      
+      state.selectedMoment = moment;
+      state.situation = '';
+      state.error = null;
+      state.validation = null;
+      render();
+      
+      // Scroll to situation input
+      setTimeout(() => {
+        const textarea = document.getElementById('situation-input');
+        if (textarea) {
+          textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          textarea.focus();
+        }
+      }, 100);
+    }
+
+    function updateSituation() {
+      const textarea = document.getElementById('situation-input');
+      state.situation = textarea ? textarea.value : '';
+      state.validation = null;
+      render();
+    }
+
+    async function generateQuestions() {
+      if (!state.situation || state.situation.trim().length < 20) {
+        state.validation = 'Please describe your situation in a bit more detail (at least a sentence or two)';
+        render();
+        return;
+      }
+      
+      state.sessionId = Date.now().toString();
+      state.sessionStartTime = Date.now();
+      state.isLoading = true;
+      state.screen = 'thinking';
+      render();
+      
+      trackAnalytics('moment_started', {
+        moment: state.selectedMoment.title,
+        situation_length: state.situation.length
+      });
+      
+      try {
+        const startAI = Date.now();
+        const response = await fetch(`${API_URL}/api/generate-questions`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            sessionId: state.sessionId,
+            momentId: state.selectedMoment.id,
+            situation: state.situation
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate questions');
+        }
+        
+        const data = await response.json();
+        state.aiGenerationTime = Date.now() - startAI;
+        state.aiCost = data.cost;
+        state.framing = data.framing;
+        
+        trackAnalytics('ai_questions_generated', {
+          generation_time_ms: state.aiGenerationTime,
+          cost: state.aiCost.toFixed(4),
+          moment: state.selectedMoment.title
+        });
+        
+        state.questions = data.questions;
+        state.questionIndex = 0;
+        state.messages = [];
+        state.responses = [];
+        state.isLoading = false;
+        askNextQuestion();
+      } catch (err) {
+        trackAnalytics('ai_generation_failed', {
+          error: err.message,
+          moment: state.selectedMoment.title
+        });
+        state.error = 'Sorry, something went wrong generating your questions. Please try again.';
+        state.isLoading = false;
+        state.screen = 'home';
+        render();
+      }
+    }
+
+    function askNextQuestion() {
+      if (state.questionIndex >= state.questions.length) {
+        state.screen = 'complete';
+        state.showingRating = false;
+        render();
+        return;
+      }
+      state.messages.push({
+        role: 'assistant',
+        content: state.questions[state.questionIndex]
+      });
+      render();
+    }
+
+    function sendMessage() {
+      const textarea = document.getElementById('user-input');
+      if (!textarea || !textarea.value.trim()) return;
+      
+      const text = textarea.value.trim();
+      state.responses.push(text);
+      state.messages.push({role: 'user', content: text});
+      state.currentInput = '';
+      textarea.value = '';
+      state.questionIndex++;
+      render();
+      setTimeout(() => askNextQuestion(), 600);
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function updateInput() {
+      const textarea = document.getElementById('user-input');
+      state.currentInput = textarea ? textarea.value : '';
+      const button = document.getElementById('send-btn');
+      if (button) button.disabled = !state.currentInput.trim();
+    }
+
+    function rateHelpful(helpful) {
+      state.helpfulRating = helpful;
+      state.showingRating = true;
+      const sessionDuration = (Date.now() - state.sessionStartTime) / 1000;
+      trackAnalytics('session_completed', {
+        helpful: helpful,
+        moment: state.selectedMoment.title,
+        session_duration_seconds: sessionDuration.toFixed(1),
+        questions_answered: state.responses.length,
+        ai_cost: state.aiCost ? state.aiCost.toFixed(4) : '0'
+      });
+      render();
+    }
+
+    function resetToHome() {
+      state = {
+        screen: 'home',
+        moments: state.moments,
+        selectedMoment: null,
+        situation: '',
+        framing: null,
+        messages: [],
+        questions: [],
+        questionIndex: 0,
+        responses: [],
+        currentInput: '',
+        isLoading: false,
+        error: null,
+        validation: null,
+        sessionId: null,
+        sessionStartTime: null,
+        aiGenerationTime: null,
+        aiCost: null,
+        showingRating: false,
+        helpfulRating: null
+      };
+      render();
+    }
+
+    function renderHome() {
+      const momentsHTML = state.moments.map(m => `
+        <div class="moment-card ${state.selectedMoment && state.selectedMoment.id === m.id ? 'selected' : ''}" 
+             onclick="window.selectMoment(${m.id})">
+          <div class="moment-title">${m.title}</div>
+          <div class="moment-prompt">${m.situation_prompt}</div>
+        </div>
+      `).join('');
+      
+      const situationSection = state.selectedMoment ? `
+        <div class="situation-section visible">
+          <label class="situation-label">${state.selectedMoment.situation_prompt}</label>
+          <textarea 
+            id="situation-input" 
+            class="situation-textarea" 
+            placeholder="Take your time to describe what's happening..."
+            oninput="window.updateSituation()"
+          >${state.situation}</textarea>
+          <button 
+            class="continue-button" 
+            onclick="window.generateQuestions()"
+            ${state.situation.trim().length < 20 ? 'disabled' : ''}
+          >
+            Continue
+          </button>
+          ${state.validation ? `<div class="validation-message">${state.validation}</div>` : ''}
+        </div>
+      ` : '';
+      
+      return `
+        <div class="home-screen">
+          <div class="page-header">
+            <div class="page-header-content">
+              <div class="page-logo">Discern</div>
+              <div class="page-tagline">Clear thinking for difficult moments</div>
+            </div>
+          </div>
+          <div class="home-container">
+            <div class="moments-section">
+              ${momentsHTML}
+            </div>
+            ${situationSection}
+            ${state.error ? `<div class="error-message">${state.error}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderThinking() {
+      if (state.isLoading) {
+        return `
+          <div style="background:#FFFFFF;min-height:100vh;">
+            <div class="thinking-header">
+              <div class="thinking-header-content">
+                <div>
+                  <div class="thinking-header-title">Preparing your questions...</div>
+                </div>
+              </div>
+            </div>
+            <div class="loading-indicator">
+              <div class="loading-text">AI is generating your personalised questions</div>
+              <div class="loading-subtext">This should take just a moment</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div style="background:#FFFFFF;min-height:100vh;">
+          <div class="thinking-header">
+            <div class="thinking-header-content">
+              <div>
+                <div class="thinking-header-title">${state.selectedMoment.title}</div>
+                <div class="thinking-header-subtitle">Question ${state.questionIndex + 1} of ${state.questions.length}</div>
+              </div>
+              <button class="home-button" onclick="window.resetToHome()">×</button>
+            </div>
+          </div>
+          <div class="messages-container" id="messages-container">
+            ${state.messages.map(m => `
+              <div class="message ${m.role}">
+                <div class="message-content">${m.content}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="input-container">
+            <div class="input-wrapper">
+              <textarea 
+                id="user-input" 
+                class="input-textarea-main" 
+                placeholder="Take your time..."
+                oninput="window.updateInput()" 
+                onkeydown="window.handleKeyDown(event)"
+              ></textarea>
+              <button id="send-btn" class="send-button" onclick="window.sendMessage()" disabled>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" x2="11" y1="2" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderComplete() {
+      let content = `
+        <div class="complete-card">
+          <div class="complete-title">Session complete: ${state.selectedMoment.title}</div>
+          ${state.responses.map((r, i) => `
+            <div class="reflection-item">
+              <div class="reflection-text"><strong>Q${i + 1}:</strong> ${r}</div>
+            </div>
+          `).join('')}
+      `;
+      
+      if (!state.showingRating) {
+        content += `
+          <div class="helpful-question">Was this helpful?</div>
+          <div class="button-group">
+            <button class="rating-button helpful" onclick="window.rateHelpful(true)">
+              Yes, it helped
+            </button>
+            <button class="rating-button" onclick="window.rateHelpful(false)">
+              Not really
+            </button>
+          </div>
+        `;
+      } else {
+        content += `
+          <div style="margin-top:20px; text-align:center;">
+            <button class="primary-button" onclick="window.resetToHome()">
+              Return home
+            </button>
+          </div>
+        `;
+      }
+      
+      content += '</div>';
+      
+      return `
+        <div class="complete-screen">
+          <div class="page-header">
+            <div class="page-header-content">
+              <div class="page-logo">Discern</div>
+            </div>
+          </div>
+          <div class="complete-container">${content}</div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const root = document.getElementById('root');
+      if (state.screen === 'home') {
+        root.innerHTML = renderHome();
+      } else if (state.screen === 'complete') {
+        root.innerHTML = renderComplete();
+      } else if (state.screen === 'thinking') {
+        root.innerHTML = renderThinking();
+        if (!state.isLoading) {
+          setTimeout(() => {
+            const container = document.getElementById('messages-container');
+            if (container) container.scrollTop = container.scrollHeight;
+            const textarea = document.getElementById('user-input');
+            if (textarea) {
+              textarea.value = state.currentInput;
+              textarea.focus();
+              updateInput();
+            }
+          }, 100);
+        }
+      }
+    }
+
+    // Global functions
+    window.selectMoment = selectMoment;
+    window.updateSituation = updateSituation;
+    window.generateQuestions = generateQuestions;
+    window.resetToHome = resetToHome;
+    window.sendMessage = sendMessage;
+    window.updateInput = updateInput;
+    window.handleKeyDown = handleKeyDown;
+    window.rateHelpful = rateHelpful;
+
+    // Init
+    loadMoments();
+  </script>
+</body>
+</html>
