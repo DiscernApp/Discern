@@ -17,7 +17,10 @@ const anthropic = new Anthropic({
   apiKey: ANTHROPIC_API_KEY,
 });
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: false
+}));
 app.use(express.json());
 
 // Session memory - stores cumulative context
