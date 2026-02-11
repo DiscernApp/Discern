@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discern - Adaptive v3</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #F5F5F3; color: #4A4A4A; line-height: 1.6; }
+    
+    .page-header { background: #2C3E50; padding: 32px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .page-header-content { max-width: 640px; margin: 0 auto; text-align: center; }
+    .page-logo { font-size: 48px; font-weight: 600; color: #FFFFFF; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .page-tagline { font-size: 16px; font-weight: 400; color: rgba(255, 255, 255, 0.8); }
+    
+    .home-screen { min-height: 100vh; background: #FFFFFF; }
+    .home-container { max-width: 640px; margin: 0 auto; padding: 40px 24px; }
+    
+    .moments-section { margin-bottom: 24px; }
+    .home-moment-card { background: #FFFFFF; border: 2px solid #E8E8E8; border-radius: 12px; padding: 24px; margin-bottom: 14px; cursor: pointer; transition: all 0.2s ease; }
+    .home-moment-card:hover { border-color: #3498DB; box-shadow: 0 4px 16px rgba(52, 152, 219, 0.12); transform: translateY(-2px); }
+    .home-moment-title { font-size: 17px; font-weight: 500; color: #2C3E50; }
+    
+    .divider-section { margin: 24px 0; position: relative; text-align: center; }
+    .divider-line { border-top: 1px solid #D0D0D0; }
+    .divider-text { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #FFFFFF; padding: 0 16px; font-size: 14px; color: #888; }
+    
+    .custom-section { margin-top: 24px; }
+    .custom-textarea { width: 100%; height: 90px; padding: 14px 16px; border: 1px solid #E8E8E8; border-radius: 10px; font-family: inherit; font-size: 17px; resize: vertical; line-height: 1.5; }
+    .custom-textarea:focus { outline: none; border-color: #3498DB; }
+    .custom-textarea::placeholder { color: #999; }
+    .continue-button { width: 100%; background: #FFFFFF; color: #2C3E50; border: 2px solid #E8E8E8; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 12px; transition: all 0.2s; }
+    .continue-button:hover { border-color: #3498DB; background: rgba(52, 152, 219, 0.05); }
+    
+    .validation-message { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; }
+    .error-message { background: #fee; border: 1px solid #fcc; color: #c00; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 14px; }
+
+    .thinking-header { background: #2C3E50; padding: 24px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .thinking-header-content { max-width: 640px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .thinking-header-title { color: #FFFFFF; font-size: 17px; font-weight: 500; }
+    .thinking-header-subtitle { color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-top: 3px; }
+    .home-button { background: transparent; border: none; color: #FFFFFF; cursor: pointer; padding: 8px; font-size: 24px; line-height: 1; }
+    
+    .messages-container { max-width: 640px; margin: 0 auto; padding: 40px 24px 200px; background: #FFFFFF; }
+    .message { margin-bottom: 24px; display: flex; }
+    .message.assistant { justify-content: flex-start; }
+    .message.user { justify-content: flex-end; }
+    .message.thinking { justify-content: center; }
+    .message-content { max-width: 88%; padding: 20px 24px; border-radius: 16px; line-height: 1.65; font-size: 16px; }
+    .message.assistant .message-content { background: #F5F5F3; border: 2px solid #E8E8E8; color: #4A4A4A; }
+    .message.user .message-content { background: #2C3E50; color: #FFFFFF; }
+    .message.thinking .message-content { background: #F5F5F3; border: 2px solid #3498DB; color: #3498DB; font-style: italic; padding: 12px 20px; }
+    
+    .input-container { position: fixed; bottom: 0; left: 0; right: 0; background: #FFFFFF; border-top: 2px solid #E8E8E8; padding: 20px 24px; z-index: 100; }
+    .input-wrapper { max-width: 640px; margin: 0 auto; display: flex; gap: 12px; align-items: flex-end; }
+    .input-textarea-main { flex: 1; min-height: 80px; max-height: 200px; padding: 16px; border: 2px solid #E8E8E8; border-radius: 10px; font-family: inherit; font-size: 16px; resize: vertical; }
+    .input-textarea-main:focus { outline: none; border-color: #3498DB; }
+    .input-textarea-main:disabled { background: #F5F5F3; cursor: not-allowed; }
+    .send-button { background: #3498DB; color: #FFFFFF; border: none; width: 52px; height: 52px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .send-button:disabled { background: #CCCCCC; cursor: not-allowed; }
+    
+    .complete-screen { min-height: 100vh; background: #FFFFFF; }
+    .complete-container { max-width: 640px; margin: 0 auto; padding: 40px 24px; }
+    .complete-card { background: #FFFFFF; border: 2px solid #E8E8E8; border-radius: 16px; padding: 32px; }
+    .complete-title { font-size: 20px; font-weight: 600; color: #2C3E50; margin-bottom: 20px; }
+    .reflection-item { background: #F5F5F3; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #3498DB; }
+    .reflection-text { font-size: 14px; color: #2C3E50; line-height: 1.6; }
+    .helpful-question { font-size: 16px; font-weight: 500; color: #2C3E50; margin: 24px 0 12px; text-align: center; }
+    .button-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    .rating-button { flex: 1; padding: 12px; border: 2px solid #E8E8E8; background: #FFFFFF; border-radius: 10px; font-size: 15px; cursor: pointer; }
+    .rating-button.helpful { border-color: #3498DB; background: #3498DB; color: #FFFFFF; }
+    .primary-button { background: #2C3E50; color: #FFFFFF; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; }
+    
+    .loading-indicator { text-align: center; padding: 40px 20px; color: #3498DB; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const API_URL='https://discern-1.onrender.com';
+    const MOMENTS=[
+      {id:1,title:"Having a difficult conversation"},
+      {id:2,title:"When everything feels urgent"},
+      {id:3,title:"I need to say no to someone"},
+      {id:4,title:"Someone's upset with me"},
+      {id:5,title:"I made a mistake"}
+    ];
+    
+    let state={
+      screen:'home',
+      pathway:null,
+      selectedMoment:null,
+      customSituation:'',
+      framing:null,
+      messages:[],
+      currentQuestion:null,
+      questionCount:0,
+      responses:[],
+      currentInput:'',
+      isWaiting:false,
+      error:null,
+      validation:null,
+      sessionId:null,
+      showingRating:false,
+      helpfulRating:null
+    };
+
+    function trackAnalytics(event,data){
+      fetch(`${API_URL}/api/analytics`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({event,data})
+      }).catch(()=>{});
+      console.log('📊',event,data);
+    }
+
+    // PATHWAY A: Moment selected - ADAPTIVE
+    async function selectMoment(moment){
+      state.customSituation='';
+      const input=document.getElementById('custom-input');
+      if(input)input.value='';
+      state.validation=null;
+      state.error=null;
+      state.pathway='moment';
+      state.selectedMoment=moment;
+      state.sessionId=Date.now().toString();
+      state.isWaiting=true;
+      state.screen='thinking';
+      render();
+      
+      trackAnalytics('pathway_used',{pathway:'moment_adaptive',moment:moment.title});
+      
+      try{
+        const r=await fetch(`${API_URL}/api/start-moment`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({sessionId:state.sessionId,momentId:moment.id})
+        });
+        if(!r.ok)throw new Error('Failed');
+        const data=await r.json();
+        
+        state.framing=data.framing;
+        state.currentQuestion=data.firstQuestion;
+        state.questionCount=1;
+        state.messages=[
+          {role:'assistant',content:data.framing},
+          {role:'assistant',content:data.firstQuestion}
+        ];
+        state.responses=[];
+        state.isWaiting=false;
+        render();
+      }catch(err){
+        state.error='Could not start session. Please try again.';
+        state.isWaiting=false;
+        render();
+      }
+    }
+
+    // PATHWAY B: Custom situation - ADAPTIVE
+    async function startCustom(){
+      const situation=state.customSituation.trim();
+      if(!situation){
+        state.validation='Please describe your situation or choose a moment above';
+        render();
+        return;
+      }
+      
+      state.validation=null;
+      state.error=null;
+      state.pathway='custom';
+      state.sessionId=Date.now().toString();
+      state.isWaiting=true;
+      state.screen='thinking';
+      render();
+      
+      trackAnalytics('pathway_used',{pathway:'custom_adaptive',textLength:situation.length});
+      
+      try{
+        const r=await fetch(`${API_URL}/api/start-custom`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({sessionId:state.sessionId,situation})
+        });
+        
+        if(!r.ok){
+          const errData=await r.json();
+          throw new Error(errData.message||'Failed');
+        }
+        
+        const data=await r.json();
+        
+        state.selectedMoment={title:'Your situation'};
+        state.currentQuestion=data.firstQuestion;
+        state.questionCount=1;
+        state.messages=[{role:'assistant',content:data.firstQuestion}];
+        state.responses=[];
+        state.isWaiting=false;
+        render();
+      }catch(err){
+        state.error='Sorry, something went wrong. Please try selecting a moment above instead.';
+        state.isWaiting=false;
+        state.screen='home';
+        render();
+      }
+    }
+
+    // NEW: Get next adaptive question based on previous answer
+    async function getNextQuestion(userAnswer){
+      state.isWaiting=true;
+      state.messages.push({role:'thinking',content:'Listening...'});
+      render();
+      
+      try{
+        const r=await fetch(`${API_URL}/api/next-question`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({sessionId:state.sessionId,answer:userAnswer})
+        });
+        
+        if(!r.ok)throw new Error('Failed');
+        const data=await r.json();
+        
+        // Remove "thinking" message
+        state.messages=state.messages.filter(m=>m.role!=='thinking');
+        
+        if(data.complete){
+          // Session complete
+          state.screen='complete';
+          state.showingRating=false;
+          state.isWaiting=false;
+          render();
+        }else{
+          // Show next question
+          state.currentQuestion=data.nextQuestion;
+          state.questionCount=data.questionNumber;
+          state.messages.push({role:'assistant',content:data.nextQuestion});
+          state.isWaiting=false;
+          
+          // Log signals for debugging
+          if(data.signals){
+            console.log('🧠 Detected signals:',data.signals);
+          }
+          
+          render();
+        }
+      }catch(err){
+        state.messages=state.messages.filter(m=>m.role!=='thinking');
+        state.error='Could not get next question.';
+        state.isWaiting=false;
+        render();
+      }
+    }
+
+    function sendMessage(){
+      const textarea=document.getElementById('user-input');
+      if(!textarea||!textarea.value.trim()||state.isWaiting)return;
+      
+      const text=textarea.value.trim();
+      state.responses.push(text);
+      state.messages.push({role:'user',content:text});
+      state.currentInput='';
+      textarea.value='';
+      render();
+      
+      // Get next adaptive question
+      setTimeout(()=>getNextQuestion(text),600);
+    }
+
+    function handleKeyDown(e){
+      if(e.key==='Enter'&&!e.shiftKey&&!state.isWaiting){
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function updateInput(){
+      const t=document.getElementById('user-input');
+      state.currentInput=t?t.value:'';
+      const b=document.getElementById('send-btn');
+      if(b)b.disabled=!state.currentInput.trim()||state.isWaiting;
+    }
+
+    function updateCustomInput(){
+      const t=document.getElementById('custom-input');
+      state.customSituation=t?t.value:'';
+      state.validation=null;
+    }
+
+    function rateHelpful(h){
+      state.helpfulRating=h;
+      state.showingRating=true;
+      trackAnalytics('session_rated',{helpful:h,pathway:state.pathway,questions:state.responses.length});
+      render();
+    }
+
+    function resetToHome(){
+      state={
+        screen:'home',
+        pathway:null,
+        selectedMoment:null,
+        customSituation:'',
+        framing:null,
+        messages:[],
+        currentQuestion:null,
+        questionCount:0,
+        responses:[],
+        currentInput:'',
+        isWaiting:false,
+        error:null,
+        validation:null,
+        sessionId:null,
+        showingRating:false,
+        helpfulRating:null
+      };
+      render();
+    }
+
+    function renderHome(){
+      return`<div class="home-screen"><div class="page-header"><div class="page-header-content"><div class="page-logo">Discern</div><div class="page-tagline">Clear thinking for difficult moments</div></div></div><div class="home-container"><div class="moments-section">${MOMENTS.map(m=>`<div class="home-moment-card" onclick="handleMomentClick(${m.id})"><div class="home-moment-title">${m.title}</div></div>`).join('')}</div><div class="divider-section"><div class="divider-line"></div><div class="divider-text">or</div></div><div class="custom-section"><textarea id="custom-input" class="custom-textarea" placeholder="Or describe your situation: What challenge are you facing right now?" oninput="window.updateCustomInput()">${state.customSituation}</textarea><button class="continue-button" onclick="window.startCustom()">Continue</button>${state.validation?`<div class="validation-message">${state.validation}</div>`:''}${state.error?`<div class="error-message">${state.error}</div>`:''}</div></div></div>`;
+    }
+
+    function renderThinking(){
+      if(state.isWaiting&&state.messages.length===0){
+        return`<div style="background:#FFFFFF;min-height:100vh;"><div class="thinking-header"><div class="thinking-header-content"><div><div class="thinking-header-title">Starting session...</div></div></div></div><div class="loading-indicator">Preparing your first question...</div></div>`;
+      }
+      return`<div style="background:#FFFFFF;min-height:100vh;"><div class="thinking-header"><div class="thinking-header-content"><div><div class="thinking-header-title">${state.selectedMoment.title}</div><div class="thinking-header-subtitle">Question ${state.questionCount} of 5</div></div><button class="home-button" onclick="window.resetToHome()">×</button></div></div><div class="messages-container" id="messages-container">${state.messages.map(m=>`<div class="message ${m.role}"><div class="message-content">${m.content}</div></div>`).join('')}</div><div class="input-container"><div class="input-wrapper"><textarea id="user-input" class="input-textarea-main" placeholder="Take your time..." oninput="window.updateInput()" onkeydown="window.handleKeyDown(event)"${state.isWaiting?' disabled':''}></textarea><button id="send-btn" class="send-button" onclick="window.sendMessage()" disabled><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div></div></div>`;
+    }
+
+    function renderComplete(){
+      let content=`<div class="complete-card"><div class="complete-title">Session complete: ${state.selectedMoment.title}</div>${state.responses.map((r,i)=>`<div class="reflection-item"><div class="reflection-text"><strong>Q${i+1}:</strong> ${r}</div></div>`).join('')}`;
+      if(!state.showingRating){
+        content+=`<div class="helpful-question">Was this helpful?</div><div class="button-group"><button class="rating-button helpful" onclick="window.rateHelpful(true)">Yes, it helped</button><button class="rating-button" onclick="window.rateHelpful(false)">Not really</button></div>`;
+      }else{
+        content+=`<div style="margin-top:20px;text-align:center;"><button class="primary-button" onclick="window.resetToHome()">Return home</button></div>`;
+      }
+      content+='</div>';
+      return`<div class="complete-screen"><div class="page-header"><div class="page-header-content"><div class="page-logo">Discern</div></div></div><div class="complete-container">${content}</div></div>`;
+    }
+
+    function render(){
+      const root=document.getElementById('root');
+      if(state.screen==='home')root.innerHTML=renderHome();
+      else if(state.screen==='complete')root.innerHTML=renderComplete();
+      else if(state.screen==='thinking'){
+        root.innerHTML=renderThinking();
+        setTimeout(()=>{
+          const c=document.getElementById('messages-container');
+          if(c)c.scrollTop=c.scrollHeight;
+          const t=document.getElementById('user-input');
+          if(t&&!state.isWaiting){t.value=state.currentInput;t.focus();updateInput();}
+        },100);
+      }
+    }
+
+    function handleMomentClick(id) {
+      const moment = MOMENTS.find(m => m.id === id);
+      if (moment) selectMoment(moment);
+    }
+
+    window.handleMomentClick = handleMomentClick;
+    window.startCustom=startCustom;
+    window.resetToHome=resetToHome;
+    window.sendMessage=sendMessage;
+    window.updateInput=updateInput;
+    window.updateCustomInput=updateCustomInput;
+    window.handleKeyDown=handleKeyDown;
+    window.rateHelpful=rateHelpful;
+
+    render();
+  </script>
+</body>
+</html>
